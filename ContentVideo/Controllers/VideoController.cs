@@ -1,12 +1,14 @@
 ﻿using ContentVideo.Models.Domain;
 using ContentVideo.Models.Dtos;
 using ContentVideo.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContentVideo.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class VideoController : ControllerBase
     {
         private readonly IVideoRepository _videoRepository;
@@ -49,16 +51,7 @@ namespace ContentVideo.Controllers
                 return NotFound();
             }
 
-            var videoDTO = new VideoDTO
-            {
-                Id = video.Id,
-                Title = video.Title,
-                ShortDescription = video.ShortDescription,
-                LongDescription = video.LongDescription,
-                Tags = video.Tags.Select(t => t.Title).ToList()
-            };
-
-            return Ok(videoDTO);
+            return Ok(video);
         }
 
         [HttpGet]
@@ -66,16 +59,7 @@ namespace ContentVideo.Controllers
         {
             var videos = await _videoRepository.GetAllVideos();
 
-            var videoDTOs = videos.Select(video => new VideoDTO
-            {
-                Id = video.Id,
-                Title = video.Title,
-                ShortDescription = video.ShortDescription,
-                LongDescription = video.LongDescription,
-                Tags = video.Tags.Select(t => t.Title).ToList()
-            }).ToList();
-
-            return Ok(videoDTOs);
+            return Ok(videos);
         }
 
         [HttpPut("{id:Guid}")]
@@ -112,32 +96,16 @@ namespace ContentVideo.Controllers
         public async Task<ActionResult<IEnumerable<VideoDTO>>> GetVideosByTagTitle(string tagTitle)
         {
             var videos = await _videoRepository.GetVideosByTagTitle(tagTitle);
-            var videoDTOs = videos.Select(video => new VideoDTO
-            {
-                Id = video.Id,
-                Title = video.Title,
-                ShortDescription = video.ShortDescription,
-                LongDescription = video.LongDescription,
-                Tags = video.Tags.Select(t => t.Title).ToList()
-            }).ToList();
 
-            return Ok(videoDTOs);
+            return Ok(videos);
         }
 
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<VideoDTO>>> SearchVideosByTitleOrShortDescription(string searchText)
         {
             var videos = await _videoRepository.SearchVideosByTitleOrShortDescription(searchText);
-            var videoDTOs = videos.Select(video => new VideoDTO
-            {
-                Id = video.Id,
-                Title = video.Title,
-                ShortDescription = video.ShortDescription,
-                LongDescription = video.LongDescription,
-                Tags = video.Tags.Select(t => t.Title).ToList()
-            }).ToList();
 
-            return Ok(videoDTOs);
+            return Ok(videos);
         }
 
 

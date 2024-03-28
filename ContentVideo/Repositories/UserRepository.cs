@@ -74,6 +74,19 @@ namespace ContentVideo.Repositories
             return true;
         }
 
+        public async Task<List<User>> GetAllUsers()
+        {
+            return await _context.Users.ToListAsync();
+        }
+
+        public async Task<User?> Authenticate(string username, string password)
+        {
+            var user = await _context.Users
+                                     .FirstOrDefaultAsync(u => u.Username == username && u.Password == password);
+            return user;
+        }
+
+
 
     }
 }

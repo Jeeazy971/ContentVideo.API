@@ -1,7 +1,12 @@
 ﻿using ContentVideo.Models.Domain;
 using ContentVideo.Models.Dtos;
 using ContentVideo.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ContentVideo.Controllers
 {
@@ -10,15 +15,18 @@ namespace ContentVideo.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
-        private readonly IRoleRepository _roleRepository; 
+        private readonly IRoleRepository _roleRepository;
+        private readonly IConfiguration _configuration;
 
-        public UserController(IUserRepository userRepository, IRoleRepository roleRepository)
+        public UserController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
+            _configuration = configuration;
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<ActionResult<UserDTO>> CreateUser(CreateUserDTO createUserDTO)
         {
             try
@@ -29,7 +37,6 @@ namespace ContentVideo.Controllers
                     return BadRequest("Le rôle spécifié n'existe pas.");
                 }
 
-                // Création de l'entité User
                 var user = new User
                 {
                     Username = createUserDTO.Username,
@@ -39,7 +46,6 @@ namespace ContentVideo.Controllers
 
                 var createdUser = await _userRepository.CreateUser(user);
 
-                // Conversion en UserDTO pour la réponse, si nécessaire
                 var userDTO = new UserDTO
                 {
                     Username = createdUser.Username,
@@ -102,13 +108,7 @@ namespace ContentVideo.Controllers
         {
             var users = await _userRepository.SearchUsersByUsername(username);
 
-            var userDTOs = users.Select(user => new UserDTO
-            {
-                Username = user.Username,
-                RoleTitle = user.Role.Title
-            });
-
-            return Ok(userDTOs);
+            return Ok(users);
         }
 
         [HttpGet("{id}")]
@@ -122,13 +122,7 @@ namespace ContentVideo.Controllers
                     return NotFound("Utilisateur non trouvé.");
                 }
 
-                var userDTO = new UserDTO
-                {
-                    Username = user.Username,
-                    RoleTitle = user.Role.Title
-                };
-
-                return Ok(userDTO);
+                return Ok(user);
             }
             catch (Exception ex)
             {
@@ -141,14 +135,53 @@ namespace ContentVideo.Controllers
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsersByRoleId(Guid roleId)
         {
             var users = await _userRepository.GetUsersByRoleId(roleId);
-            var userDTOs = users.Select(user => new UserDTO
-            {
-                Username = user.Username,
-                RoleTitle = user.Role.Title
-            }).ToList();
 
-            return Ok(userDTOs);
+            return Ok(users);
         }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetAllUsers()
+        {
+            var users = await _userRepository.GetAllUsers();
+
+            return Ok(users);
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult> Login([FromBody] LoginDTO loginDTO)
+        {
+            var user = await _userRepository.Authenticate(loginDTO.Username, loginDTO.Password);
+            if (user == null)
+            {
+                return Unauthorized("Informations d'identification non valides.");
+            }
+
+            // Générer un token JWT
+            var token = GenerateJwtToken(user);
+
+            return Ok(new { Token = token });
+        }
+
+        private string GenerateJwtToken(User user)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            var key = Encoding.ASCII.GetBytes(_configuration["JwtKey"]); 
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.Name, user.Username),
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
 
 
 

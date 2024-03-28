@@ -2,6 +2,7 @@
 using ContentVideo.Models.Domain;
 using ContentVideo.Repositories;
 using ContentVideo.Models.Dtos;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ContentVideo.Controllers
 {
@@ -46,13 +47,7 @@ namespace ContentVideo.Controllers
                 return NotFound();
             }
 
-            var roleDTO = new RoleDTO
-            {
-                Title = role.Title,
-                Description = role.Description
-            };
-
-            return Ok(roleDTO);
+            return Ok(role);
         }
 
         [HttpGet]
@@ -60,13 +55,8 @@ namespace ContentVideo.Controllers
         {
             var roles = await _roleRepository.GetAllRoles();
 
-            var roleDTOs = roles.Select(role => new RoleDTO
-            {
-                Title = role.Title,
-                Description = role.Description
-            }).ToList();
 
-            return Ok(roleDTOs);
+            return Ok(roles);
         }
 
         [HttpPut("{id}")]

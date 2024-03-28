@@ -2,7 +2,7 @@
 {
     public class Video
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Title { get; set; }
         public string ShortDescription { get; set; }
         public string LongDescription { get; set; }
