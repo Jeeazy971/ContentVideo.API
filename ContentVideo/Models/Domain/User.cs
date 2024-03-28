@@ -1,6 +1,4 @@
-﻿using System.Xml;
-
-namespace ContentVideo.Models.Domain
+﻿namespace ContentVideo.Models.Domain
 {
     public class User
     {

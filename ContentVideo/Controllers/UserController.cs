@@ -1,6 +1,7 @@
 ﻿using ContentVideo.Models.Domain;
 using ContentVideo.Models.Dtos;
 using ContentVideo.Repositories;
+using ContentVideo.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -37,10 +38,12 @@ namespace ContentVideo.Controllers
                     return BadRequest("Le rôle spécifié n'existe pas.");
                 }
 
+                var hashedPassword = PasswordHelper.HashPassword(createUserDTO.Password);
+
                 var user = new User
                 {
                     Username = createUserDTO.Username,
-                    Password = createUserDTO.Password, 
+                    Password = hashedPassword,
                     RoleId = role.Id
                 };
 
@@ -59,6 +62,7 @@ namespace ContentVideo.Controllers
                 return StatusCode(500, $"Une erreur interne est survenue : {ex.Message}");
             }
         }
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserDTO updateUserDTO)
@@ -150,8 +154,8 @@ namespace ContentVideo.Controllers
         [HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] LoginDTO loginDTO)
         {
-            var user = await _userRepository.Authenticate(loginDTO.Username, loginDTO.Password);
-            if (user == null)
+            var user = await _userRepository.FindByUsername(loginDTO.Username);
+            if (user == null || !PasswordHelper.VerifyPassword(loginDTO.Password, user.Password))
             {
                 return Unauthorized("Informations d'identification non valides.");
             }
@@ -165,15 +169,17 @@ namespace ContentVideo.Controllers
         private string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-
             var key = Encoding.ASCII.GetBytes(_configuration["JwtKey"]); 
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role.Title)
+            };
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.Name, user.Username),
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
@@ -181,8 +187,6 @@ namespace ContentVideo.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-
-
 
 
     }

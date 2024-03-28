@@ -23,6 +23,7 @@ namespace ContentVideo.Controllers
         {
             var video = new Video
             {
+                Id = createVideoDTO.Id,
                 Title = createVideoDTO.Title,
                 ShortDescription = createVideoDTO.ShortDescription,
                 LongDescription = createVideoDTO.LongDescription,

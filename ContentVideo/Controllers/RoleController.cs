@@ -8,6 +8,7 @@ namespace ContentVideo.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin")]
     public class RoleController : ControllerBase
     {
         private readonly IRoleRepository _roleRepository;

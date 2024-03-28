@@ -1,7 +1,6 @@
 ﻿using ContentVideo.Models.Domain;
 using ContentVideo.Models.Dtos;
 using ContentVideo.Repositories;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContentVideo.Controllers
@@ -23,6 +22,7 @@ namespace ContentVideo.Controllers
 
             var tag = new Tag
             {
+                Id = createTagDTO.Id,
                 Title = createTagDTO.Title
             };
 

@@ -10,7 +10,7 @@ namespace ContentVideo.Repositories
         Task<User?> GetUserById(Guid id);
         Task<bool> UpdateUser(User user);
         Task<List<User>> GetAllUsers();
-        Task<User?> Authenticate(string username, string password);
+        Task<User?> FindByUsername(string username);
 
 
         Task<IEnumerable<User>> SearchUsersByUsername(string username);

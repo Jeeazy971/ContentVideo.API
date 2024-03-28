@@ -79,14 +79,12 @@ namespace ContentVideo.Repositories
             return await _context.Users.ToListAsync();
         }
 
-        public async Task<User?> Authenticate(string username, string password)
+        public async Task<User?> FindByUsername(string username)
         {
-            var user = await _context.Users
-                                     .FirstOrDefaultAsync(u => u.Username == username && u.Password == password);
-            return user;
+            return await _context.Users
+                                 .Include(u => u.Role)
+                                 .SingleOrDefaultAsync(u => u.Username == username);
         }
-
-
 
     }
 }

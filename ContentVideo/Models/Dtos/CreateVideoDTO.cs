@@ -4,7 +4,7 @@ namespace ContentVideo.Models.Dtos
 {
     public class CreateVideoDTO
     {
-
+        public Guid Id { get; set; } = Guid.NewGuid();
         [Required]
         public string Title { get; set; }
 
