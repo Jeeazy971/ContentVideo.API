@@ -49,10 +49,18 @@ namespace ContentVideo.Controllers
 
                 var createdUser = await _userRepository.CreateUser(user);
 
+                var createdUserWithRole = await _userRepository.FindByUsername(createdUser.Username);
+
+                if (createdUserWithRole == null)
+                {
+                    return StatusCode(500, "Une erreur est survenue lors de la récupération des informations de l'utilisateur.");
+                }
+
                 var userDTO = new UserDTO
                 {
-                    Username = createdUser.Username,
-                    RoleTitle = role.Title
+                    Id = createdUserWithRole.Id,
+                    Username = createdUserWithRole.Username,
+                    RoleTitle = createdUserWithRole.Role?.Title
                 };
 
                 return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, userDTO);
@@ -79,6 +87,7 @@ namespace ContentVideo.Controllers
                 return BadRequest("Le rôle spécifié n'existe pas.");
             }
 
+            user.RoleId = role.Id;
             user.Username = updateUserDTO.Username;
             user.Password = updateUserDTO.Password;
 
@@ -120,20 +129,28 @@ namespace ContentVideo.Controllers
         {
             try
             {
-                var user = await _userRepository.GetUserById(id);
+                var user = await _userRepository.GetUserByIdWithRole(id);
+
                 if (user == null)
                 {
                     return NotFound("Utilisateur non trouvé.");
                 }
 
-                return Ok(user);
+                var userDTO = new UserDTO
+                {
+                    Id = user.Id,
+                    Username = user.Username,
+                    RoleTitle = user.Role?.Title
+                };
+
+                return Ok(userDTO);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Une erreur interne est survenue : {ex.Message}");
-
             }
         }
+
 
         [HttpGet("ByRole/{roleId}")]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsersByRoleId(Guid roleId)
@@ -146,10 +163,25 @@ namespace ContentVideo.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetAllUsers()
         {
-            var users = await _userRepository.GetAllUsers();
+            try
+            {
+                var users = await _userRepository.GetAllUsersWithRoles(); 
 
-            return Ok(users);
+                var userDTOs = users.Select(u => new UserDTO
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    RoleTitle = u.Role?.Title
+                }).ToList();
+
+                return Ok(userDTOs);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Une erreur interne est survenue : {ex.Message}");
+            }
         }
+
 
         [HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] LoginDTO loginDTO)

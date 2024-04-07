@@ -12,9 +12,12 @@ namespace ContentVideo.Repositories
         Task<List<User>> GetAllUsers();
         Task<User?> FindByUsername(string username);
 
-
         Task<IEnumerable<User>> SearchUsersByUsername(string username);
         Task<IEnumerable<User>> GetUsersByRoleId(Guid roleId);
 
+        Task<User?> GetUserByIdWithRole(Guid id);
+
+        Task<IEnumerable<User>> GetAllUsersWithRoles();
     }
 }
+

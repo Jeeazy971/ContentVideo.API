@@ -59,7 +59,9 @@ namespace ContentVideo.Repositories
 
         public async Task<User?> GetUserById(Guid id)
         {
-            return await _context.Users.FindAsync(id);
+            return await _context.Users
+                                 .Include(u => u.Role)
+                                 .FirstOrDefaultAsync(u => u.Id == id);
         }
 
         public async Task<bool> UpdateUser(User user)
@@ -85,6 +87,20 @@ namespace ContentVideo.Repositories
                                  .Include(u => u.Role)
                                  .SingleOrDefaultAsync(u => u.Username == username);
         }
+
+        public async Task<IEnumerable<User>> GetAllUsersWithRoles()
+        {
+            return await _context.Users.Include(u => u.Role).ToListAsync();
+        }
+
+        public async Task<User?> GetUserByIdWithRole(Guid id)
+        {
+            return await _context.Users
+                                 .Include(u => u.Role)
+                                 .SingleOrDefaultAsync(u => u.Id == id);
+        }
+
+
 
     }
 }

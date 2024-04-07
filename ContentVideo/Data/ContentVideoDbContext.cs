@@ -25,7 +25,14 @@ namespace ContentVideo.Data
                 new Role { Id = Guid.NewGuid(), Title = "Guest", Description = "Accès limité, principalement en lecture seule." },
                 new Role { Id = Guid.NewGuid(), Title = "Developer", Description = "Accès aux API et aux fonctionnalités de développement." }
             );
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Role) // Un User a un Role
+                .WithMany(r => r.Users) // Un Role a plusieurs Users
+                .HasForeignKey(u => u.RoleId); // La clé étrangère dans User est RoleId
         }
+
+
 
     }
 }
